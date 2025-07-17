@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import toast from 'react-hot-toast';
+// import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMovies } from '../../services/movieService';
 import ReactPaginate from 'react-paginate';
@@ -9,6 +9,7 @@ import Loader from '../Loader/Loader';
 import ErrorMessage from '../ErrorMessage/ErrorMessage';
 import MovieModal from '../MovieModal/MovieModal';
 import styles from './App.module.css';
+import { Movie } from '../../types/movie';
 
 export default function App() {
     const [query, setQuery] = useState('');
