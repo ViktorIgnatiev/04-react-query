@@ -9,12 +9,12 @@ import ErrorMessage from '../ErrorMessage/ErrorMessage';
 import MovieModal from '../MovieModal/MovieModal';
 import styles from './App.module.css';
 
-export default function App() {
+// Виносимо логіку пошуку в окремий хук
+function useMovieSearch() {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-
+    
     const handleSearch = async (query: string) => {
         try {
             setIsLoading(true);
@@ -35,6 +35,13 @@ export default function App() {
             setIsLoading(false);
         }
     };
+    
+    return { movies, isLoading, error, handleSearch };
+}
+
+export default function App() {
+    const { movies, isLoading, error, handleSearch } = useMovieSearch();
+    const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
     const handleSelectMovie = (movie: Movie) => {
         setSelectedMovie(movie);
