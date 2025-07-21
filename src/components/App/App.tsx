@@ -1,27 +1,46 @@
-import { useState } from 'react';
-// import toast from 'react-hot-toast';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMovies } from '../../services/movieService';
+import { Movie } from '../../types/movie';
+import toast from 'react-hot-toast';
 import ReactPaginate from 'react-paginate';
 import SearchBar from '../SearchBar/SearchBar';
 import MovieGrid from '../MovieGrid/MovieGrid';
 import Loader from '../Loader/Loader';
 import ErrorMessage from '../ErrorMessage/ErrorMessage';
 import MovieModal from '../MovieModal/MovieModal';
+import { Toaster } from 'react-hot-toast';
 import styles from './App.module.css';
-import { Movie } from '../../types/movie';
+
+
+
 
 export default function App() {
     const [query, setQuery] = useState('');
     const [page, setPage] = useState(1);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-    const { data, isLoading, isError } = useQuery({
-        queryKey: ['movies', query, page],
-        queryFn: () => fetchMovies(query, page),
-        enabled: !!query,
-        staleTime: 1000 * 60 * 5, // 5 minutes
-    });
+    const { data, isLoading, isError, isSuccess } = useQuery({
+    queryKey: ['movies', query, page],
+    queryFn: () => fetchMovies(query, page),
+    enabled: !!query,
+    staleTime: 1000 * 60 * 5,
+    placeholderData: { results: [], total_pages: 0, page: 1 },
+    gcTime: 1000 * 60 * 5,
+    retry: 2,
+});
+
+useEffect(() => {
+    if (isError) {
+        toast.error('Failed to fetch movies', { id: 'fetch-error' });
+        return;
+    }
+    
+    if (!isLoading && isSuccess && data?.results.length === 0 && query.trim() !== '' && page === 1) {
+        toast.error('No movies found for your request', { id: 'no-results' });
+    }
+}, [isError, isSuccess, isLoading, data, query, page]);
+    
 
     const handleSearch = (searchQuery: string) => {
         setQuery(searchQuery);
@@ -42,12 +61,13 @@ export default function App() {
 
     return (
         <div className={styles.container}>
+            <Toaster position="top-center" />
             <SearchBar onSubmit={handleSearch} />
             
-            {isLoading && <Loader />}
+            {isLoading && query && <Loader />}
             {isError && <ErrorMessage />}
             
-            {data?.results && data.results.length > 0 && (
+            {isSuccess && data.results.length > 0 && (
                 <>
                     <MovieGrid 
                         movies={data.results} 
@@ -67,10 +87,6 @@ export default function App() {
                         />
                     )}
                 </>
-            )}
-            
-            {data?.results?.length === 0 && !isLoading && (
-                <p>No movies found for your request.</p>
             )}
             
             {selectedMovie && (
