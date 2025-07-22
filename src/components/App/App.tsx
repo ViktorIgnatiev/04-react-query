@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { fetchMovies } from '../../services/movieService';
 import { Movie } from '../../types/movie';
 import toast from 'react-hot-toast';
@@ -17,15 +17,14 @@ export default function App() {
   const [page, setPage] = useState(1);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
 
-  const { data, isLoading, isError, isSuccess, isPreviousData } = useQuery({
+  const { data, isLoading, isError, isSuccess, isFetching } = useQuery({
     queryKey: ['movies', query, page],
     queryFn: () => fetchMovies(query, page),
     enabled: !!query,
     staleTime: 1000 * 60 * 5,
-    keepPreviousData: true,
     gcTime: 1000 * 60 * 5,
     retry: 2,
-    placeholderData: keepPreviousData,
+    placeholderData: (previousData) => previousData,
   });
 
   useEffect(() => {
@@ -62,16 +61,18 @@ export default function App() {
     setPage(selected + 1);
   };
 
+  const showLoader = isLoading && isFetching && query; 
+  const showGrid = (isSuccess || (isFetching && data)) && data?.results.length > 0;
+
   return (
     <div className={styles.container}>
       <Toaster position="top-center" />
       <SearchBar onSubmit={handleSearch} />
 
-      {isLoading && !isPreviousData && query && <Loader />}
+      {showLoader && <Loader />}
       {isError && <ErrorMessage />}
 
-      
-      {(isSuccess || (isPreviousData && data)) && data?.results.length > 0 && (
+      {showGrid && (
         <>
           <MovieGrid movies={data.results} onSelect={handleSelectMovie} />
 
